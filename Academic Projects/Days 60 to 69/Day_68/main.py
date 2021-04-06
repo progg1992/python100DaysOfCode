@@ -9,6 +9,12 @@ app.config['SECRET_KEY'] = 'any-secret-key-you-choose'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 #CREATE TABLE IN DB
 class User(UserMixin, db.Model):
@@ -27,6 +33,27 @@ def home():
 
 @app.route('/register')
 def register():
+    if request.method == "POST":
+        if User.query.filter_by(email+request.form.get('email')).first():
+            #User already exists
+            flash("You've already signed up with that email. Please log in instead")
+            return redirect(url_for('login'))
+
+        hash_and_salted_password = generate_password_hash(
+            request.form.get('password'),
+            method='pbkdf2:sha256',
+            salt_length=8
+        )
+        new_user = User(
+            email=request.form.get('email'),
+            name=request.form.get('name'),
+            password=hash_and_salted_password,
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        login_user(new_user)
+        return redirect(url_for('secret'))
+
     return render_template("register.html")
 
 
