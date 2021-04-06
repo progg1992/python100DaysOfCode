@@ -34,7 +34,7 @@ def home():
 @app.route('/register')
 def register():
     if request.method == "POST":
-        if User.query.filter_by(email+request.form.get('email')).first():
+        if User.query.filter_by(email=request.form.get('email')).first():
             #User already exists
             flash("You've already signed up with that email. Please log in instead")
             return redirect(url_for('login'))
@@ -79,13 +79,17 @@ def login():
 
 
 @app.route('/secrets')
+@login_required
 def secrets():
+    print(current_user.name)
     return render_template("secrets.html")
 
 
 @app.route('/logout')
+@login_required
 def logout():
-    pass
+    logout_user()
+    return redirect(url_for('home'))
 
 
 @app.route('/download')
