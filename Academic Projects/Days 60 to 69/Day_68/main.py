@@ -59,6 +59,22 @@ def register():
 
 @app.route('/login')
 def login():
+    if request.method == "POST":
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        user = User.query.filter_by(email=email).first()
+        #Email doesn't exist or password is incorrect
+        if not user:
+            flash("That email or password is incorrect")
+            return redirect(url_for('login'))
+        elif not check_password_hash(user.password, password):
+            flash('That email or password is incorrect')
+            return redirect(url_for('login'))
+        else:
+            login_user(user)
+            return redirect(url_for('secrets'))
+
     return render_template("login.html")
 
 
